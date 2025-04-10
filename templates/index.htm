@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Online Sözlük</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        input[type="text"], textarea {
+            width: 300px;
+            padding: 8px;
+            margin-right: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            padding: 8px 12px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #result, #addResult {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+        }
+        .error {
+            color: red;
+        }
+        .success {
+            color: green;
+        }
+    </style>
+</head>
+<body>
+    <h1>Online Sözlük</h1>
+
+    <!-- Kelime Arama Formu -->
+    <form id="searchForm">
+        <input type="text" id="wordInput" placeholder="Kelime ara..." required>
+        <button type="submit">Ara</button>
+    </form>
+    <div id="result"></div>
+
+    <hr>
+
+    <!-- Kelime Ekleme Formu -->
+    <h2>Yeni Kelime Ekle</h2>
+    <form id="addWordForm">
+        <input type="text" id="newWord" placeholder="Kelime" required>
+        <textarea id="newDefinition" placeholder="Tanım" required></textarea>
+        <button type="submit">Ekle</button>
+    </form>
+    <div id="addResult"></div>
+
+    <script>
+        // Kelime Arama Formu
+        document.getElementById('searchForm').addEventListener('submit', function(event) {
+            event.preventDefault(); // Formun sayfayı yenilemesini engelle
+            const word = document.getElementById('wordInput').value;
+
+            fetch(`/search?word=${encodeURIComponent(word)}`)
+                .then(response => response.json())
+                .then(data => {
+                    const resultDiv = document.getElementById('result');
+                    if (data.error) {
+                        resultDiv.innerHTML = `<p class="error">${data.error}</p>`;
+                    } else {
+                        resultDiv.innerHTML = `<strong>${data.word}:</strong> ${data.definition}`;
+                    }
+                })
+                .catch(error => {
+                    console.error('Hata:', error);
+                    document.getElementById('result').innerHTML = '<p class="error">Bir hata oluştu.</p>';
+                });
+        });
+
+        // Kelime Ekleme Formu
+        document.getElementById('addWordForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const word = document.getElementById('newWord').value;
+            const definition = document.getElementById('newDefinition').value;
+
+            fetch('/add_word', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ word, definition })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const addResultDiv = document.getElementById('addResult');
+                if (data.message) {
+                    addResultDiv.innerHTML = `<p class="success">${data.message}</p>`;
+                } else {
+                    addResultDiv.innerHTML = `<p class="error">${data.error}</p>`;
+                }
+            })
+            .catch(error => console.error('Hata:', error));
+        });
+    </script>
+</body>
+</html>
