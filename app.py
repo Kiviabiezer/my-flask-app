@@ -14,9 +14,14 @@ def get_db_connection():
     conn.row_factory = sqlite3.Row
     return conn
 
-# Ana sayfa - Arama formu, Kelime Ekleme formu ve Kelime Silme formu
+# Ana sayfa - Arama formu, Kelime Ekleme formu, Kelime Silme formu ve Kelime Listesi
 @app.route('/')
 def home():
+    # Veritabanından tüm kelimeleri ve anlamlarını çek
+    conn = get_db_connection()
+    words = conn.execute("SELECT * FROM dictionary ORDER BY word ASC").fetchall()
+    conn.close()
+
     return render_template_string('''
         <!DOCTYPE html>
         <html lang="tr">
@@ -59,11 +64,27 @@ def home():
                     background-color: #f8d7da;
                     color: #721c24;
                 }
+                .word-list {
+                    margin-top: 30px;
+                }
+                .word-list table {
+                    width: 100%;
+                    border-collapse: collapse;
+                }
+                .word-list th, .word-list td {
+                    padding: 10px;
+                    border: 1px solid #ddd;
+                    text-align: left;
+                }
+                .word-list th {
+                    background-color: #0d6efd;
+                    color: white;
+                }
             </style>
         </head>
         <body>
             <div class="container">
-                <h1>Online Verinti Kelime Sözlüğü</h1>
+                <h1>Online Sözlük</h1>
 
                 <!-- Kelime Arama Formu -->
                 <form id="searchForm" class="mb-4">
@@ -100,6 +121,33 @@ def home():
                     <button type="submit" class="btn btn-danger">Sil</button>
                 </form>
                 <div id="deleteResult" class="result"></div>
+
+                <hr>
+
+                <!-- Kelime Listesi -->
+                <h2>Tüm Kelimeler</h2>
+                <div class="word-list">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Kelime</th>
+                                <th>Anlam</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for word in words %}
+                            <tr>
+                                <td>{{ word['word'] }}</td>
+                                <td>{{ word['definition'] }}</td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="2" style="text-align: center;">Henüz sözlükte kelime bulunmamaktadır.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             <script>
@@ -166,7 +214,7 @@ def home():
             </script>
         </body>
         </html>
-    ''')
+    ''', words=words)
 
 # Kelime arama endpoint'i
 @app.route('/search', methods=['GET'])
